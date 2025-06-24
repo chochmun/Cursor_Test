@@ -1,0 +1,116 @@
+{
+    "ECU_Variant": "PRK_2",
+    "Project_Path": "D:/workspace/PRK/LX3_X70.05.07/LX3_PRK_1_5_X70.05.07_pre5",
+    "Dual_Performance": false,
+    "QNX_License": {
+        "Licenses": "NB1S-44YK-PBDM-50T3-SKD9",
+        "Licenses_Timestamp": 1676970743.495807,
+        "Expiry_Days": 7,
+        "Status": true
+    },
+    "Uart_Config": {
+        "POWER_SUPPLY_COM_PORT": "NO_REQUEST",
+        "HOST_NO_REQUEST": [],
+        "SH00_COM_PORT": "NO_REQUEST",
+        "PH00_COM_PORT": "NO_REQUEST",
+        "PH01_COM_PORT": "NO_REQUEST",
+        "Status": true
+    },
+    "Trace32_Config": {
+        "Verify_Dll_Path": true,
+        "Status": true
+    },
+    "PowerSupply_ Config": {
+        "ECU_CHANNEL": "Output",
+        "Check_Response": true,
+        "Outputi": {
+            "Voltages": 12.0,
+            "Currents": 5.0
+        },
+        "Output2": {
+            "Voltages": 12.0,
+            "Currents": 5.0
+        },
+        "Status": true
+    },
+    "SWCsInfo": {
+        "SH00": {
+            "Swc_List": [
+                "CtApDCM",
+                "CtApDEM",
+                "CtApFA_P",
+                "CtApHWIOP_P",
+                "CtApIVc_P",
+                "CtApNVM",
+                "CtApPCA",
+                "CtApPDW",
+                "CtApRSPA",
+                "CtApSF_P",
+                "CtApUISP_FreeRunning",
+                "CtApVDISP",
+                "CtApVIOIF_FreeRunning",
+                "CtApVPE P"
+            ],
+            "Swc_File_List": [
+                "CtApDCM",
+                "CtApDEM",
+                "CtApFA_P",
+                "CtApHWIOP_P",
+                "CtApIVc_P",
+                "CtApNVM",
+                "CtApPCA",
+                "CtApPDW",
+                "CtApRSPA",
+                "CtApSF_P",
+                "CtApUISP_FreeRunning",
+                "CtApVDISP",
+                "CtApVIOIF_FreeRunning",
+                "CtApVPE P"
+            ],
+            "Swc_Mapping": {
+                "CtApDCM": "CtApDCM",
+                "CtApDEM": "CtApDEM",
+                "CtApFA_P": "CtApFA_P",
+                "CtApHWIOP_P": "CtApHWIOP_P",
+                "CtApIVc_P": "CtApIVc_P",
+                "CtApNVM": "CtApNVM",
+                "CtApPCA": "CtApPCA",
+                "CtApPDW": "CtApPDW",
+                "CtApRSPA": "CtApRSPA",
+                "CtApSF_P": "CtApRSPA",
+                "CtApUISP_FreeRunning": "CtApUISP_FreeRunning",
+                "CtApVDISP": "CtApVDISP",
+                "CtApVIOIF_FreeRunning": "CtApVIOIF_FreeRunning",
+                "CtApVPE P": "CtApVPE P"
+            }
+        },
+        "PH00": {
+            "Swe_List": [
+                "CtApVPU1_NFR",
+                "CtApIPSV_FreeRunning",
+                "CtApIDSV_FreeRunning",
+                "CtApSR_OD_FreeRunning",
+                "CtApVFS_FreeRunning",
+                "CtApCC_FreeRunning"
+            ],
+            "Swc_File List": [
+                "CtApVPU1_NFR",
+                "CtApIPSV_FreeRunning",
+                "CtApIDSV_FreeRunning",
+                "CtApSR_OD_FreeRunning",
+                "CtApVFS_FreeRunning",
+                "CtApCC_FreeRunning"
+            ],
+            "Swc_Mapping": {
+                "CtApVPU1_NFR": "CtApVPU1_NFR",
+                "CtApIPSV_FreeRunning": "CtApIPSV_FreeRunning",
+                "CtApIDSV_FreeRunning": "CtApIDSV_FreeRunning",
+                "CtApSR_OD_FreeRunning": "CtApSR_OD_FreeRunning",
+                "CtApVFS_FreeRunning": "CtApVFS_FreeRunning",
+                "CtApCC_FreeRunning": "CtApCC_FreeRunning"
+            }
+        },
+        "PH01": "UNKNOWN"
+    },
+    "config_status": true
+}
