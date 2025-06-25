@@ -5,129 +5,149 @@ import serial.tools.list_ports
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, 
                              QWidget, QLabel, QLineEdit, QCheckBox, QComboBox, 
                              QPushButton, QFileDialog, QMessageBox, QGroupBox, 
-                             QScrollArea, QFrame, QSplitter, QTextEdit)
+                             QScrollArea, QFrame, QSplitter, QTextEdit, QDialog, 
+                             QDialogButtonBox)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QPalette, QColor
+import QE_Config
+
+class FeatureSelectionDialog(QDialog):
+    def __init__(self, features, selected_features, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Test Service Selection")
+        self.selected_features = set(selected_features)
+        self.checkboxes = []
+        layout = QVBoxLayout(self)
+        for feature in features:
+            hbox = QHBoxLayout()
+            cb = QCheckBox()
+            cb.setChecked(feature in self.selected_features)
+            label = QLabel(feature)
+            hbox.addWidget(cb)
+            hbox.addWidget(label)
+            layout.addLayout(hbox)
+            self.checkboxes.append((cb, feature))
+        # 버튼
+        button_box = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+        layout.addWidget(button_box)
+
+    def get_selected(self):
+        return [feature for cb, feature in self.checkboxes if cb.isChecked()]
 
 class ConfigEditor(QMainWindow):
     def __init__(self):
         super().__init__()
         self.config_file = "Storages_Cfg.json"
+        self.qe_config_path = "QE_Config.py"
         self.original_config = {}
         self.current_config = {}
         self.has_changes = False
-        
+        self.qe_features = []
+        self.qe_features_selected = []
+        self.load_qe_features()
         self.init_ui()
         self.load_config()
         
+    def load_qe_features(self):
+        try:
+            self.qe_features = list(getattr(QE_Config, "QE_CFG_TESTING_FEATURES", []))
+            self.qe_features_selected = list(getattr(QE_Config, "QE_CFG_TESTING_FEATURES_Selected", self.qe_features))
+            if not self.qe_features_selected:
+                self.qe_features_selected = self.qe_features
+        except Exception:
+            self.qe_features = []
+            self.qe_features_selected = []
+
+    def save_qe_features_selected(self, selected):
+        # QE_Config.py에 QE_CFG_TESTING_FEATURES_Selected 저장 (append or overwrite)
+        try:
+            with open(self.qe_config_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+            found = False
+            for i, line in enumerate(lines):
+                if line.strip().startswith('QE_CFG_TESTING_FEATURES_Selected'):
+                    lines[i] = f'QE_CFG_TESTING_FEATURES_Selected = {repr(selected)}\n'
+                    found = True
+                    break
+            if not found:
+                # 마지막에 추가
+                lines.append(f'\nQE_CFG_TESTING_FEATURES_Selected = {repr(selected)}\n')
+            with open(self.qe_config_path, 'w', encoding='utf-8') as f:
+                f.writelines(lines)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"QE_Config.py 저장 중 오류: {str(e)}")
+
     def init_ui(self):
         self.setWindowTitle("Automation Testing Configuration")
-        self.setGeometry(100, 100, 1200, 800)
-        
-        # 밝은 흰색 배경 설정
+        self.setGeometry(100, 100, 960, 640)
         self.setStyleSheet("""
-            QMainWindow {
-                background-color: #f8f9fa;
-            }
-            QGroupBox {
-                font-weight: bold;
-                border: 2px solid #dee2e6;
-                border-radius: 5px;
-                margin-top: 1ex;
-                padding-top: 10px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px 0 5px;
-            }
-            QPushButton {
-                background-color: #007bff;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #0056b3;
-            }
-            QPushButton:disabled {
-                background-color: #6c757d;
-            }
-            QLineEdit {
-                padding: 5px;
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                background-color: white;
-            }
-            QComboBox {
-                padding: 5px;
-                border: 1px solid #ced4da;
-                border-radius: 4px;
-                background-color: white;
-            }
+            QMainWindow { background-color: #f8f9fa; }
+            QGroupBox { font-weight: bold; border: 2px solid #dee2e6; border-radius: 5px; margin-top: 1ex; padding-top: 10px; }
+            QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 5px 0 5px; }
+            QPushButton { background-color: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; }
+            QPushButton:hover { background-color: #0056b3; }
+            QPushButton:disabled { background-color: #6c757d; }
+            QLineEdit { padding: 5px; border: 1px solid #ced4da; border-radius: 4px; background-color: white; }
+            QComboBox { padding: 5px; border: 1px solid #ced4da; border-radius: 4px; background-color: white; }
         """)
-        
-        # 메인 위젯 설정
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        
-        # 메인 레이아웃
         main_layout = QVBoxLayout(central_widget)
-        
         # 제목
         title_label = QLabel("Automation Testing Configuration")
         title_label.setFont(QFont("Arial", 16, QFont.Weight.Bold))
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title_label.setStyleSheet("color: #495057; margin: 10px;")
+        title_label.setStyleSheet("color: #495057; margin: 2px 0 2px 0;")
         main_layout.addWidget(title_label)
-        
         # 구분선
         line = QFrame()
         line.setFrameShape(QFrame.Shape.HLine)
         line.setFrameShadow(QFrame.Shadow.Sunken)
         main_layout.addWidget(line)
-        
-        # 스크롤 영역 생성
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        
-        # 스크롤 영역 내부 위젯
-        scroll_widget = QWidget()
-        scroll_layout = QVBoxLayout(scroll_widget)
-        
-        # 설정 섹션들 생성
-        self.create_ecu_variant_section(scroll_layout)
-        self.create_project_path_section(scroll_layout)
-        self.create_dual_performance_section(scroll_layout)
-        self.create_qnx_license_section(scroll_layout)
-        self.create_uart_config_section(scroll_layout)
-        self.create_trace32_config_section(scroll_layout)
-        self.create_power_supply_config_section(scroll_layout)
-        
-        scroll_area.setWidget(scroll_widget)
-        main_layout.addWidget(scroll_area)
-        
+        # 2열 레이아웃
+        columns_layout = QHBoxLayout()
+        # 좌측 열
+        left_widget = QWidget()
+        left_layout = QVBoxLayout(left_widget)
+        # Test Service Selection (QGroupBox)
+        tss_group = QGroupBox("Test Service Selection")
+        tss_layout = QHBoxLayout(tss_group)
+        tss_layout.addStretch()
+        setting_btn = QPushButton("Setting")
+        setting_btn.setFixedWidth(160)
+        setting_btn.clicked.connect(self.open_feature_selection)
+        tss_layout.addWidget(setting_btn, alignment=Qt.AlignmentFlag.AlignCenter)
+        tss_layout.addStretch()
+        left_layout.addWidget(tss_group)
+        self.create_ecu_variant_section(left_layout)
+        self.create_project_path_section(left_layout)
+        self.create_dual_performance_section(left_layout)
+        self.create_qnx_license_section(left_layout)
+        self.create_trace32_config_section(left_layout)
+        # 우측 열
+        right_widget = QWidget()
+        right_layout = QVBoxLayout(right_widget)
+        self.create_uart_config_section(right_layout)
+        self.create_power_supply_config_section(right_layout)
+        # 열을 columns_layout에 추가
+        columns_layout.addWidget(left_widget, 1)
+        columns_layout.addWidget(right_widget, 1)
+        main_layout.addLayout(columns_layout)
         # 버튼 영역
         button_layout = QHBoxLayout()
-        
         self.save_button = QPushButton("Save")
         self.save_button.clicked.connect(self.save_config)
         self.save_button.setEnabled(False)
-        
         self.cancel_button = QPushButton("Cancel")
         self.cancel_button.clicked.connect(self.close)
-        
         self.refresh_button = QPushButton("Refresh")
         self.refresh_button.clicked.connect(self.refresh_com_ports)
-        
         button_layout.addStretch()
         button_layout.addWidget(self.cancel_button)
         button_layout.addWidget(self.refresh_button)
         button_layout.addWidget(self.save_button)
-        
         main_layout.addLayout(button_layout)
         
     def create_ecu_variant_section(self, parent_layout):
@@ -200,6 +220,20 @@ class ConfigEditor(QMainWindow):
         
         parent_layout.addWidget(group_box)
         
+    def create_trace32_config_section(self, parent_layout):
+        group_box = QGroupBox("Trace32 Configuration")
+        layout = QVBoxLayout(group_box)
+        
+        self.verify_dll_path_checkbox = QCheckBox("Verify Dll Path")
+        self.verify_dll_path_checkbox.stateChanged.connect(self.on_config_changed)
+        layout.addWidget(self.verify_dll_path_checkbox)
+        
+        self.trace32_status_checkbox = QCheckBox("Status")
+        self.trace32_status_checkbox.stateChanged.connect(self.on_config_changed)
+        layout.addWidget(self.trace32_status_checkbox)
+        
+        parent_layout.addWidget(group_box)
+        
     def create_uart_config_section(self, parent_layout):
         group_box = QGroupBox("UART Configuration")
         layout = QVBoxLayout(group_box)
@@ -252,20 +286,6 @@ class ConfigEditor(QMainWindow):
         self.uart_status_checkbox = QCheckBox("Status")
         self.uart_status_checkbox.stateChanged.connect(self.on_config_changed)
         layout.addWidget(self.uart_status_checkbox)
-        
-        parent_layout.addWidget(group_box)
-        
-    def create_trace32_config_section(self, parent_layout):
-        group_box = QGroupBox("Trace32 Configuration")
-        layout = QVBoxLayout(group_box)
-        
-        self.verify_dll_path_checkbox = QCheckBox("Verify Dll Path")
-        self.verify_dll_path_checkbox.stateChanged.connect(self.on_config_changed)
-        layout.addWidget(self.verify_dll_path_checkbox)
-        
-        self.trace32_status_checkbox = QCheckBox("Status")
-        self.trace32_status_checkbox.stateChanged.connect(self.on_config_changed)
-        layout.addWidget(self.trace32_status_checkbox)
         
         parent_layout.addWidget(group_box)
         
@@ -494,6 +514,15 @@ class ConfigEditor(QMainWindow):
                 combo.setCurrentText("NO_REQUEST")
             combo.blockSignals(False)
         self.update_comport_info_label()
+
+    def open_feature_selection(self):
+        dialog = FeatureSelectionDialog(self.qe_features, self.qe_features_selected, self)
+        if dialog.exec_() == QDialog.Accepted:
+            selected = dialog.get_selected()
+            self.qe_features_selected = selected
+            self.save_qe_features_selected(selected)
+            QMessageBox.information(self, "Success", "테스트 서비스 선택이 저장되었습니다.")
+        # 취소 시 아무 동작 없음
 
 def main():
     app = QApplication(sys.argv)
